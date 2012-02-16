@@ -20,7 +20,7 @@ import javax.swing.border.TitledBorder;
 public class LoveCounter
 {
 
-   private Date startDate;
+   private GregorianCalendar startCal;
    private JLabel howMuchTime;
 
    /**
@@ -29,24 +29,25 @@ public class LoveCounter
    public LoveCounter()
    {
       TimeZone est = TimeZone.getTimeZone("US/Eastern");
-      GregorianCalendar start = new GregorianCalendar(est);
-      start.set(2010, Calendar.JULY, 2, 2, 0, 0);
-      this.startDate = start.getTime();
+      GregorianCalendar startCal = new GregorianCalendar(est);
+      startCal.set(2010, Calendar.JULY, 2, 2, 0, 0);
+      this.startCal = startCal;
    }
 
    /**
     * Constructor for testing
-    * @param startDate test startdate
+    * @param startCal starting calendar to use
     */
-   public LoveCounter(Date startDate){
-      this.startDate = startDate;
+   public LoveCounter(GregorianCalendar startCal){
+      this.startCal = startCal;
    }
 
    /**
     * Method that returns a string of how long between the date in the constructor and current date
+    * @param currentCal the calendar of the current datetime
     * @return returns string of years, months, days, hours, minutes, and seconds between two dates
     */
-   public String timeDating()
+   public String timeDating(GregorianCalendar currentCal)
    {
       //initialize a bunch of numbers used
       long secondsPerYear = 60 * 60 * 24 * 365;
@@ -55,8 +56,8 @@ public class LoveCounter
       long secondsPerMinute = 60;
 
       //get the current date
-      Calendar current = new GregorianCalendar();
-      Date currentDate = current.getTime();
+      Date currentDate = currentCal.getTime();
+      Date startDate = startCal.getTime();
 
       //difference between the dates in seconds
       long difference = (currentDate.getTime() - startDate.getTime()) / 1000;
@@ -70,7 +71,7 @@ public class LoveCounter
       long remDays = remYears % secondsPerDay;
 
       //convert the total days into months and days
-      MonthDayObject mdo = getMonths(totalDays, current.get(Calendar.YEAR));
+      MonthDayObject mdo = getMonths(totalDays, startCal.get(Calendar.MONTH));
       long months = mdo.getMonth();
       long days = mdo.getDays();
 
@@ -90,24 +91,21 @@ public class LoveCounter
     * Accounts for specific month totals.
     * Accounts for leap years.
     * @param totalDays the total days from year remainder
-    * @param currentYear the current year, to account for leap years
+    * @param startMonth the start month
     * @return a MonthDayObject that holds the month and day
     */
-   private MonthDayObject getMonths(long totalDays, int currentYear)
+   private MonthDayObject getMonths(long totalDays, int startMonth)
    {
       long[] daysPerMonth = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-      if ((currentYear % 4) == 0)
-      {
-         daysPerMonth[1] = 29;
-      }
+
       long monthDays = 0;
       long tempDays = 0;
       MonthDayObject mdo = new MonthDayObject();
 
       for (int i = 0; i < 12; i++)
       {
-         tempDays += daysPerMonth[i];
-         if (tempDays >= totalDays)
+         tempDays += daysPerMonth[startMonth];
+         if (tempDays > totalDays)
          {
             mdo.setMonth(i);
             mdo.setDays(totalDays-monthDays);
@@ -115,7 +113,15 @@ public class LoveCounter
          }
          else
          {
-            monthDays += daysPerMonth[i];
+            monthDays += daysPerMonth[startMonth];
+         }
+         if(startMonth < 11)
+         {
+            startMonth++;
+         }
+         else
+         {
+            startMonth = 0;
          }
       }
       return mdo;
@@ -125,7 +131,7 @@ public class LoveCounter
     * Adds content to the main swing frame and updates the label every second so its counting up
     * @param container frame container
     */
-   public void addContentsToFrame(Container container)
+   private void addContentsToFrame(Container container)
    {
       JPanel panel = new JPanel();
       panel.setPreferredSize(new Dimension(620, 100));
@@ -145,7 +151,8 @@ public class LoveCounter
       {
          public void actionPerformed(ActionEvent e)
          {
-            howMuchTime.setText(timeDating());
+            GregorianCalendar currentCal = new GregorianCalendar();
+            howMuchTime.setText(timeDating(currentCal));
          }
       };
 
